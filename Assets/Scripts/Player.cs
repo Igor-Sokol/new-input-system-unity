@@ -6,6 +6,9 @@ public class Player : MonoBehaviour
 {
     [SerializeField] private float _moveSpeed;
     [SerializeField] private float _rotateSpeed;
+    [SerializeField] private float _takeDistance;
+    [SerializeField] private float _holdDistance;
+    [SerializeField] private float _throwForce;
 
     private PlayerInput _playerInput;
 
@@ -14,12 +17,17 @@ public class Player : MonoBehaviour
 
     private Vector2 _rotation;
 
+    private GameObject _currentObjct;
+
     private void Awake()
     {
         _playerInput = new PlayerInput();
 
         _playerInput.Player.Move.performed += ctx => OnMove();
         _playerInput.Player.Look.performed += ctx => OnLook();
+        _playerInput.Player.PickUp.performed += ctx => TryPickUp();
+        _playerInput.Player.Drop.performed += ctx => Throw(true);
+        _playerInput.Player.Throw.performed += ctx => Throw();
     }
 
     private void OnEnable()
@@ -39,6 +47,33 @@ public class Player : MonoBehaviour
 
         Look(_rotate);
         Move(_direction);
+    }
+
+    private void TryPickUp()
+    {
+        if (Physics.Raycast(transform.position, transform.forward, out var hitInfo, _takeDistance) && !hitInfo.collider.gameObject.isStatic)
+        {
+            _currentObjct = hitInfo.collider.gameObject;
+
+            _currentObjct.transform.position = default;
+            _currentObjct.transform.SetParent(transform, false);
+            _currentObjct.transform.localPosition += new Vector3(0, 0, _holdDistance);
+
+            _currentObjct.GetComponent<Rigidbody>().isKinematic = true;
+        }
+    }
+
+    private void Throw(bool drop = false)
+    {
+        _currentObjct.transform.SetParent(null);
+
+        Rigidbody rigidbody = _currentObjct.GetComponent<Rigidbody>();
+        rigidbody.isKinematic = false;
+
+        if (!drop)
+        {
+            rigidbody.AddForce(transform.forward * _throwForce, ForceMode.Impulse);
+        }
     }
 
     private void OnMove()
