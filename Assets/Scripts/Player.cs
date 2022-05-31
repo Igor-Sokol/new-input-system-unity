@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem.Interactions;
 
 public class Player : MonoBehaviour
 {
@@ -28,6 +29,13 @@ public class Player : MonoBehaviour
         _playerInput.Player.PickUp.performed += ctx => TryPickUp();
         _playerInput.Player.Drop.performed += ctx => Throw(true);
         _playerInput.Player.Throw.performed += ctx => Throw();
+        _playerInput.Player.Click.performed += ctx => 
+        {
+            if (ctx.interaction is MultiTapInteraction)
+            {
+                Shoot();
+            }
+        };
     }
 
     private void OnEnable()
@@ -47,6 +55,11 @@ public class Player : MonoBehaviour
 
         Look(_rotate);
         Move(_direction);
+    }
+
+    private void Shoot()
+    {
+        Debug.Log("Shoot!");
     }
 
     private void TryPickUp()
